@@ -18,33 +18,33 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-    const productCollection = client.db('data').collection('product');
+    const productCollection = client.db("data").collection("product");
 
-
-    app.get('/product', async (req, res) => {
+    app.get("/product", async (req, res) => {
       const query = {};
       const cursor = productCollection.find(query);
       const products = await cursor.toArray();
-      res.send(products)
+      res.send(products);
     });
 
-    app.get('/product/:id', async(req, res) =>{
+    app.get("/product/:id", async (req, res) => {
       const id = req.params.id;
-      const query={_id: ObjectId(id)};
+      const query = { _id: ObjectId(id) };
       const product = await productCollection.findOne(query);
       res.send(product);
-  });
+    });
 
-  } 
-  
-  finally {
+    app.post('/product', async (req, res)=>{
+      const newProduct = req.body;
+      const result = await productCollection.insertOne(newProduct);
+      res.send(result)
+    })
 
-
+    
+  } finally {
   }
 }
 run().catch(console.dir);
-
-
 
 app.get("/", (req, res) => {
   res.send("Hello all World!");
