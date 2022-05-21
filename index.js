@@ -1,7 +1,8 @@
 const express = require("express");
 var cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-require("dotenv").config();
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -20,7 +21,17 @@ async function run() {
     await client.connect();
     const productCollection = client.db("data").collection("product");
 
-    app.get("/product", async (req, res) => {
+    // Authentication
+    app.post('/login', (req, res) => {
+      const user = req.body;
+      const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: '1d'
+      });
+      res.send({ accessToken });
+    });
+
+
+    app.get("/products", async (req, res) => {
       const query = {};
       const cursor = productCollection.find(query);
       const products = await cursor.toArray();
@@ -30,9 +41,8 @@ async function run() {
     app.get("/product", async (req, res) => {
       const email = req.query.email;
       const query = {email: email};
-      const cursor = productCollection.find(query);
-      const products = await cursor.toArray();
-      res.send(products);
+      const cursor = await productCollection.find(query).toArray();
+      res.send(cursor);
     });
 
     app.get("/product/:id", async (req, res) => {
@@ -42,7 +52,7 @@ async function run() {
       res.send(product);
     });
 
-    app.post("/product", async (req, res) => {
+    app.post("/products", async (req, res) => {
       const newProduct = req.body;
       const result = await productCollection.insertOne(newProduct);
       res.send(result);
